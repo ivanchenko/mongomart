@@ -75,9 +75,17 @@ function CartDAO(database) {
          *
          */
 
-        callback(null);
-
-        // TODO-lab6 Replace all code above (in this method).
+        this.db.collection('cart')
+            .find({userId: userId, "items._id": itemId}, {"items.$": 1})
+            .toArray(function (err, carts) {
+                if (err) {
+                    callback(null);
+                } else {
+                    if (carts[0]) {
+                        callback(carts[0].items[0])
+                    }
+                }
+            });
     };
 
 
@@ -167,38 +175,16 @@ function CartDAO(database) {
          *
          */
 
-        var userCart = {
-            userId: userId,
-            items: []
-        }
-        var dummyItem = this.createDummyItem();
-        dummyItem.quantity = quantity;
-        userCart.items.push(dummyItem);
-        callback(userCart);
-
-        // TODO-lab7 Replace all code above (in this method).
-
+        this.db.collection('cart').findOneAndUpdate(
+            {userId: userId, "items._id": itemId},
+            {$set: {"items.$.quantity": quantity}},
+            {upsert: true, returnOriginal: false},
+            function (err, result) {
+                assert.equal(null, err);
+                callback(result.value);
+            }
+        );
     };
-
-    this.createDummyItem = function () {
-        "use strict";
-
-        var item = {
-            _id: 1,
-            title: "Gray Hooded Sweatshirt",
-            description: "The top hooded sweatshirt we offer",
-            slogan: "Made of 100% cotton",
-            stars: 0,
-            category: "Apparel",
-            img_url: "/img/products/hoodie.jpg",
-            price: 29.99,
-            quantity: 1,
-            reviews: []
-        };
-
-        return item;
-    }
-
 }
 
 
